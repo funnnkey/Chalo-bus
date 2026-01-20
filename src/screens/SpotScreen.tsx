@@ -37,14 +37,15 @@ export const SpotScreen: React.FC = () => {
   const [fromCityDropdownVisible, setFromCityDropdownVisible] = useState(false);
   const [toCityDropdownVisible, setToCityDropdownVisible] = useState(false);
 
-  useEffect(() => {
-    loadSearchHistory();
-  }, []);
-
   const loadSearchHistory = async () => {
     const history = await getSearchHistory();
     dispatch(setSearchHistory(history));
   };
+
+  useEffect(() => {
+    loadSearchHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSearchBuses = async () => {
     if (fromCity && toCity) {
@@ -200,94 +201,94 @@ export const SpotScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  busNumberSection: {
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 8,
+    elevation: 2,
+    marginHorizontal: SPACING.MD,
+    padding: SPACING.MD,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
   container: {
-    flex: 1,
     backgroundColor: COLORS.LIGHT_GRAY,
+    flex: 1,
+  },
+  dividerContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginVertical: SPACING.LG,
+    paddingHorizontal: SPACING.MD,
+  },
+  dividerLine: {
+    backgroundColor: COLORS.MEDIUM_GRAY,
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: '600',
+    marginHorizontal: SPACING.MD,
+  },
+  header: {
+    alignItems: 'center',
+    backgroundColor: COLORS.PRIMARY,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: SPACING.MD,
+  },
+  headerTitle: {
+    color: COLORS.WHITE,
+    fontSize: FONT_SIZES.TITLE,
+    fontWeight: 'bold',
+  },
+  recentSection: {
+    marginTop: SPACING.LG,
+    padding: SPACING.MD,
   },
   scrollView: {
     flex: 1,
   },
-  header: {
-    backgroundColor: COLORS.PRIMARY,
-    padding: SPACING.MD,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  searchButton: {
     alignItems: 'center',
+    backgroundColor: COLORS.PRIMARY,
+    borderRadius: 8,
+    marginTop: SPACING.SM,
+    padding: SPACING.MD,
   },
-  headerTitle: {
-    fontSize: FONT_SIZES.TITLE,
-    fontWeight: 'bold',
+  searchButtonDisabled: {
+    backgroundColor: COLORS.MEDIUM_GRAY,
+  },
+  searchButtonText: {
     color: COLORS.WHITE,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: 'bold',
+  },
+  searchSection: {
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 8,
+    elevation: 2,
+    marginHorizontal: SPACING.MD,
+    marginTop: SPACING.MD,
+    padding: SPACING.MD,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  sectionTitle: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: FONT_SIZES.LARGE,
+    fontWeight: 'bold',
+    marginBottom: SPACING.MD,
   },
   settingsButton: {
     padding: SPACING.SM,
   },
   settingsIcon: {
     fontSize: FONT_SIZES.HEADER,
-  },
-  searchSection: {
-    backgroundColor: COLORS.WHITE,
-    padding: SPACING.MD,
-    marginTop: SPACING.MD,
-    marginHorizontal: SPACING.MD,
-    borderRadius: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  searchButton: {
-    backgroundColor: COLORS.PRIMARY,
-    padding: SPACING.MD,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: SPACING.SM,
-  },
-  searchButtonDisabled: {
-    backgroundColor: COLORS.MEDIUM_GRAY,
-  },
-  searchButtonText: {
-    fontSize: FONT_SIZES.BODY,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: SPACING.LG,
-    paddingHorizontal: SPACING.MD,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: COLORS.MEDIUM_GRAY,
-  },
-  dividerText: {
-    fontSize: FONT_SIZES.BODY,
-    fontWeight: '600',
-    color: COLORS.TEXT_SECONDARY,
-    marginHorizontal: SPACING.MD,
-  },
-  busNumberSection: {
-    backgroundColor: COLORS.WHITE,
-    padding: SPACING.MD,
-    marginHorizontal: SPACING.MD,
-    borderRadius: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  recentSection: {
-    padding: SPACING.MD,
-    marginTop: SPACING.LG,
-  },
-  sectionTitle: {
-    fontSize: FONT_SIZES.LARGE,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_PRIMARY,
-    marginBottom: SPACING.MD,
   },
 });

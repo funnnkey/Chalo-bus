@@ -114,82 +114,82 @@ export const SearchResultsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.LIGHT_GRAY,
-  },
-  header: {
-    backgroundColor: COLORS.PRIMARY,
-    padding: SPACING.MD,
-  },
-  headerTitle: {
-    fontSize: FONT_SIZES.TITLE,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-  },
-  routeText: {
-    fontSize: FONT_SIZES.BODY,
-    color: COLORS.WHITE,
-    marginTop: SPACING.XS,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: SPACING.MD,
-  },
   busCard: {
     backgroundColor: COLORS.WHITE,
     borderRadius: 10,
-    padding: SPACING.MD,
+    elevation: 2,
     marginBottom: SPACING.MD,
+    padding: SPACING.MD,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
-    elevation: 2,
   },
   busCardHeader: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: SPACING.MD,
   },
-  busOperator: {
-    fontSize: FONT_SIZES.LARGE,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_PRIMARY,
+  busDetailLabel: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: '600',
   },
-  busNumber: {
+  busDetailValue: {
+    color: COLORS.TEXT_PRIMARY,
     fontSize: FONT_SIZES.BODY,
     fontWeight: 'bold',
-    color: COLORS.PRIMARY,
   },
   busDetailsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: SPACING.SM,
   },
-  busDetailLabel: {
+  busNumber: {
+    color: COLORS.PRIMARY,
     fontSize: FONT_SIZES.BODY,
-    color: COLORS.TEXT_SECONDARY,
-    fontWeight: '600',
-  },
-  busDetailValue: {
-    fontSize: FONT_SIZES.BODY,
-    color: COLORS.TEXT_PRIMARY,
     fontWeight: 'bold',
+  },
+  busOperator: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: FONT_SIZES.LARGE,
+    fontWeight: 'bold',
+  },
+  container: {
+    backgroundColor: COLORS.LIGHT_GRAY,
+    flex: 1,
+  },
+  header: {
+    backgroundColor: COLORS.PRIMARY,
+    padding: SPACING.MD,
+  },
+  headerTitle: {
+    color: COLORS.WHITE,
+    fontSize: FONT_SIZES.TITLE,
+    fontWeight: 'bold',
+  },
+  routeText: {
+    color: COLORS.WHITE,
+    fontSize: FONT_SIZES.BODY,
+    marginTop: SPACING.XS,
+  },
+  scrollContent: {
+    padding: SPACING.MD,
+  },
+  scrollView: {
+    flex: 1,
   },
   trackButton: {
+    alignItems: 'center',
     backgroundColor: COLORS.PRIMARY,
-    paddingVertical: SPACING.MD,
     borderRadius: 8,
     marginTop: SPACING.MD,
-    alignItems: 'center',
+    paddingVertical: SPACING.MD,
   },
   trackButtonText: {
+    color: COLORS.WHITE,
     fontSize: FONT_SIZES.BODY,
     fontWeight: 'bold',
-    color: COLORS.WHITE,
   },
 });

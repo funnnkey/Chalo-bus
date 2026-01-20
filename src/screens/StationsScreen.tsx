@@ -22,37 +22,37 @@ export const StationsScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: COLORS.LIGHT_GRAY,
+    flex: 1,
+  },
+  content: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    padding: SPACING.LG,
   },
   header: {
     backgroundColor: COLORS.PRIMARY,
     padding: SPACING.MD,
   },
   headerTitle: {
+    color: COLORS.WHITE,
     fontSize: FONT_SIZES.TITLE,
     fontWeight: 'bold',
-    color: COLORS.WHITE,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.LG,
+  placeholderSubtitle: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: FONT_SIZES.BODY,
+    textAlign: 'center',
   },
   placeholderText: {
     fontSize: 64,
     marginBottom: SPACING.MD,
   },
   placeholderTitle: {
+    color: COLORS.TEXT_PRIMARY,
     fontSize: FONT_SIZES.HEADER,
     fontWeight: 'bold',
-    color: COLORS.TEXT_PRIMARY,
     marginBottom: SPACING.SM,
-  },
-  placeholderSubtitle: {
-    fontSize: FONT_SIZES.BODY,
-    color: COLORS.TEXT_SECONDARY,
-    textAlign: 'center',
   },
 });
