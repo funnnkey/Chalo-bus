@@ -16,22 +16,8 @@ export const RootNavigator: React.FC = () => {
         }}
       >
         <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
-        <Stack.Screen
-          name="SearchResults"
-          component={SearchResultsScreen}
-          options={{
-            headerShown: true,
-            title: 'Search Results',
-          }}
-        />
-        <Stack.Screen
-          name="BusTracking"
-          component={BusTrackingScreen}
-          options={{
-            headerShown: true,
-            title: 'Bus Tracking',
-          }}
-        />
+        <Stack.Screen name="SearchResults" component={SearchResultsScreen} />
+        <Stack.Screen name="BusTracking" component={BusTrackingScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

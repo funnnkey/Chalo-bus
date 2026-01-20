@@ -44,6 +44,17 @@ export interface UIState {
   loading: boolean;
 }
 
+export interface RouteStop {
+  id: number;
+  sequence: number;
+  stopName: string;
+  latitude: number;
+  longitude: number;
+  expectedTime: string;
+  actualTime?: string;
+  distance?: number;
+}
+
 export type RootStackParamList = {
   MainTabs: undefined;
   SearchResults: {
@@ -52,6 +63,13 @@ export type RootStackParamList = {
   };
   BusTracking: {
     busNumber: string;
+    operatorName: string;
+    fromCity: string;
+    toCity: string;
+    departure: string;
+    arrival: string;
+    fare: number;
+    bayNumber?: string;
   };
 };
 
