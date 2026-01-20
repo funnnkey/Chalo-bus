@@ -44,6 +44,37 @@ export interface UIState {
   loading: boolean;
 }
 
+export interface AlarmConfig {
+  stopName: string;
+  latitude: number;
+  longitude: number;
+  radius: number; // 5-15 km
+  alarmType: 'NOTIFICATION' | 'SOUND' | 'VIBRATION' | 'ALL';
+}
+
+export interface AlarmState {
+  isAlarmSet: boolean;
+  alarmStops: AlarmConfig[];
+  distanceToStop: number;
+  hasTriggered: boolean;
+  selectedStopIndex: number | null;
+  alarmDistance: number; // Default 10km
+  alarmSettings: {
+    notification: boolean;
+    sound: boolean;
+    vibration: boolean;
+    repeatAlerts: boolean;
+  };
+}
+
+export interface LocationData {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  speed?: number;
+  timestamp: number;
+}
+
 export interface RouteStop {
   id: number;
   sequence: number;

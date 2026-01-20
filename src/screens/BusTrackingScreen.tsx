@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,33 +14,120 @@ import { RootStackParamList, RouteStop } from '../types';
 import { COLORS, FONT_SIZES, SPACING } from '../utils/constants';
 import { getCurrentStopIndex, getRouteStops } from '../utils/mockRouteData';
 
+// Redux hooks
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { 
+  setAlarm, 
+  clearAlarm, 
+  updateDistance, 
+  markAlarmTriggered,
+  selectAlarmStop,
+  updateAlarmSettings,
+  updateAlarmDistance,
+  selectAlarmState,
+  selectIsAlarmSet,
+  selectActiveAlarms,
+  selectSelectedAlarm,
+  selectDistanceToStop,
+  selectHasTriggered,
+  selectAlarmSettings,
+} from '../store/alarmSlice';
+
+// Services and components
+import GPSAlarmService from '../services/GPSAlarmService';
+import { StopSelectionModal } from '../components/StopSelectionModal';
+import { AlarmSettingsModal } from '../components/AlarmSettingsModal';
+import { LocationData } from '../types';
+
 type BusTrackingRouteProp = RouteProp<RootStackParamList, 'BusTracking'>;
 
 export const BusTrackingScreen: React.FC = () => {
   const route = useRoute<BusTrackingRouteProp>();
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const { busNumber, operatorName, fromCity, toCity, departure, arrival, fare, bayNumber } =
     route.params;
 
+  // Redux state
+  const isAlarmSet = useAppSelector(selectIsAlarmSet);
+  const activeAlarms = useAppSelector(selectActiveAlarms);
+  const selectedAlarm = useAppSelector(selectSelectedAlarm);
+  const distanceToStop = useAppSelector(selectDistanceToStop);
+  const hasTriggered = useAppSelector(selectHasTriggered);
+  const alarmSettings = useAppSelector(selectAlarmSettings);
+
+  // Local state
   const [stops, setStops] = useState<RouteStop[]>([]);
   const [currentStopIndex, setCurrentStopIndex] = useState<number>(2);
   const [isFetchingLocation, setIsFetchingLocation] = useState<boolean>(true);
+  const [showStopModal, setShowStopModal] = useState<boolean>(false);
+  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+  const [locationPermissionGranted, setLocationPermissionGranted] = useState<boolean>(false);
+  const [notificationPermissionGranted, setNotificationPermissionGranted] = useState<boolean>(false);
 
   const isOnSchedule = true;
   const delayMinutes = 0;
 
+  // Initialize screen and request permissions
   useEffect(() => {
-    const routeStops = getRouteStops(fromCity, toCity);
-    setStops(routeStops);
+    const initializeScreen = async () => {
+      // Get route stops
+      const routeStops = getRouteStops(fromCity, toCity);
+      setStops(routeStops);
 
-    setIsFetchingLocation(true);
-    const timeout = setTimeout(() => {
-      setCurrentStopIndex(getCurrentStopIndex());
-      setIsFetchingLocation(false);
-    }, 900);
+      setIsFetchingLocation(true);
+      const timeout = setTimeout(() => {
+        setCurrentStopIndex(getCurrentStopIndex());
+        setIsFetchingLocation(false);
+      }, 900);
 
-    return () => clearTimeout(timeout);
+      // Request permissions
+      try {
+        const permissions = await GPSAlarmService.requestPermissions();
+        setLocationPermissionGranted(permissions.location);
+        setNotificationPermissionGranted(permissions.notifications);
+      } catch (error) {
+        console.error('Error requesting permissions:', error);
+      }
+
+      return () => clearTimeout(timeout);
+    };
+
+    initializeScreen();
   }, [fromCity, toCity]);
+
+  // Set up GPS monitoring when alarm is set
+  useEffect(() => {
+    if (isAlarmSet && locationPermissionGranted) {
+      // Start location monitoring
+      GPSAlarmService.startLocationMonitoring((location: LocationData) => {
+        // Update distance for selected alarm
+        if (selectedAlarm) {
+          const distance = GPSAlarmService.calculateDistance(
+            location.latitude,
+            location.longitude,
+            selectedAlarm.latitude,
+            selectedAlarm.longitude
+          );
+          
+          dispatch(updateDistance(distance));
+          
+          // Check if alarm should trigger
+          if (distance <= selectedAlarm.radius && !hasTriggered) {
+            dispatch(markAlarmTriggered(selectedAlarm.stopName));
+          }
+        }
+      });
+
+      // Cleanup function
+      return () => {
+        GPSAlarmService.stopLocationMonitoring();
+      };
+    } else {
+      // Stop monitoring if no alarm set
+      GPSAlarmService.stopLocationMonitoring();
+    }
+  }, [isAlarmSet, locationPermissionGranted, selectedAlarm, hasTriggered, dispatch]);
 
   const currentStop = stops[currentStopIndex];
   const nextStop = useMemo(() => {
@@ -58,12 +146,96 @@ export const BusTrackingScreen: React.FC = () => {
   }, [currentStopIndex, nextStop, stops.length]);
 
   const handleClose = () => {
+    GPSAlarmService.stopLocationMonitoring();
     navigation.goBack();
   };
 
-  const handleSetAlarm = () => {
-    alert('GPS-based alarm will be set when you are 5-10km from destination');
+  const handleSetAlarm = useCallback(async () => {
+    if (!locationPermissionGranted || !notificationPermissionGranted) {
+      Alert.alert(
+        'Permissions Required',
+        'Location and notification permissions are required for GPS alarms.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Retry', onPress: requestPermissions },
+        ]
+      );
+      return;
+    }
+
+    if (stops.length === 0) {
+      Alert.alert('Error', 'No route stops available');
+      return;
+    }
+
+    // If multiple stops, show selection modal
+    if (stops.length > 1) {
+      setShowStopModal(true);
+    } else {
+      // Single destination - set alarm directly
+      const destinationStop = stops[stops.length - 1];
+      handleAlarmStopSelect(destinationStop, stops.length - 1);
+    }
+  }, [locationPermissionGranted, notificationPermissionGranted, stops]);
+
+  const handleAlarmStopSelect = useCallback((selectedStop: RouteStop, index: number) => {
+    const alarmConfig = {
+      stopName: selectedStop.stopName,
+      latitude: selectedStop.latitude,
+      longitude: selectedStop.longitude,
+      radius: alarmSettings.repeatAlerts ? 15 : 10, // Default radius
+      alarmType: getAlarmType() as 'NOTIFICATION' | 'SOUND' | 'VIBRATION' | 'ALL',
+    };
+
+    dispatch(setAlarm(alarmConfig));
+    dispatch(selectAlarmStop(index));
+    
+    // Set alarm in service
+    GPSAlarmService.setDestinationAlarm(alarmConfig);
+    
+    setShowStopModal(false);
+  }, [dispatch, alarmSettings]);
+
+  const getAlarmType = (): string => {
+    const { notification, sound, vibration } = alarmSettings;
+    if (notification && sound && vibration) return 'ALL';
+    if (notification && sound) return 'SOUND';
+    if (notification && vibration) return 'VIBRATION';
+    if (notification) return 'NOTIFICATION';
+    if (sound) return 'SOUND';
+    if (vibration) return 'VIBRATION';
+    return 'NOTIFICATION'; // Default
   };
+
+  const handleClearAlarm = useCallback(() => {
+    if (selectedAlarm) {
+      dispatch(clearAlarm(selectedAlarm.stopName));
+      GPSAlarmService.clearAlarm(selectedAlarm.stopName);
+    }
+  }, [dispatch, selectedAlarm]);
+
+  const handleStopSelectionModalClose = useCallback(() => {
+    setShowStopModal(false);
+  }, []);
+
+  const handleSettingsModalClose = useCallback(() => {
+    setShowSettingsModal(false);
+  }, []);
+
+  const handleSettingsSave = useCallback(() => {
+    setShowSettingsModal(false);
+    // Settings are already updated via props
+  }, []);
+
+  const requestPermissions = useCallback(async () => {
+    try {
+      const permissions = await GPSAlarmService.requestPermissions();
+      setLocationPermissionGranted(permissions.location);
+      setNotificationPermissionGranted(permissions.notifications);
+    } catch (error) {
+      console.error('Error requesting permissions:', error);
+    }
+  }, []);
 
   const handleShare = () => {
     alert('Share current bus location feature coming soon!');
@@ -297,13 +469,56 @@ export const BusTrackingScreen: React.FC = () => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.alarmButton]}
-          onPress={handleSetAlarm}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.actionButtonText}>🔔 SET ALARM</Text>
-        </TouchableOpacity>
+        {!isAlarmSet ? (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.alarmButton]}
+            onPress={handleSetAlarm}
+            activeOpacity={0.8}
+            disabled={!locationPermissionGranted || !notificationPermissionGranted}
+          >
+            <Text style={styles.actionButtonText}>
+              🔔 SET ALARM
+            </Text>
+            {(!locationPermissionGranted || !notificationPermissionGranted) && (
+              <Text style={styles.permissionWarningText}>
+                Permissions required
+              </Text>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <>
+            <View style={[styles.alarmStatusCard, hasTriggered && styles.alarmTriggeredCard]}>
+              <Text style={[styles.alarmStatusTitle, hasTriggered && styles.alarmTriggeredTitle]}>
+                {hasTriggered ? '🚨 ALARM TRIGGERED' : '🔔 ALARM SET ✓'}
+              </Text>
+              <Text style={[styles.alarmStatusDetail, hasTriggered && styles.alarmTriggeredDetail]}>
+                Distance to {selectedAlarm?.stopName}: {distanceToStop > 0 ? `${distanceToStop.toFixed(1)} km` : '—'}
+              </Text>
+              <Text style={[styles.alarmStatusInfo, hasTriggered && styles.alarmTriggeredInfo]}>
+                Will alert at: {selectedAlarm?.radius}km {hasTriggered ? '• TRIGGERED' : '• READY'}
+              </Text>
+            </View>
+            
+            <View style={styles.footerButtons}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.settingsButton]}
+                onPress={() => setShowSettingsModal(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.settingsButtonText}>⚙️</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.actionButton, styles.clearAlarmButton]}
+                onPress={handleClearAlarm}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.actionButtonText}>🔕</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+        
         <TouchableOpacity
           style={[styles.actionButton, styles.shareButton]}
           onPress={handleShare}
@@ -312,6 +527,25 @@ export const BusTrackingScreen: React.FC = () => {
           <Text style={styles.actionButtonText}>📍 SHARE</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modals */}
+      <StopSelectionModal
+        visible={showStopModal}
+        stops={stops}
+        selectedStopIndex={currentStopIndex}
+        onStopSelect={handleAlarmStopSelect}
+        onClose={handleStopSelectionModalClose}
+      />
+
+      <AlarmSettingsModal
+        visible={showSettingsModal}
+        alarmDistance={10} // This would come from Redux
+        alarmSettings={alarmSettings}
+        onDistanceChange={(distance) => dispatch(updateAlarmDistance(distance))}
+        onSettingsChange={(settings) => dispatch(updateAlarmSettings(settings))}
+        onClose={handleSettingsModalClose}
+        onSave={handleSettingsSave}
+      />
     </SafeAreaView>
   );
 };
@@ -676,5 +910,73 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.BODY,
     fontWeight: 'bold',
     color: COLORS.WHITE,
+  },
+  // Alarm specific styles
+  permissionWarningText: {
+    fontSize: FONT_SIZES.SMALL,
+    color: COLORS.WHITE,
+    opacity: 0.8,
+    marginTop: SPACING.XS,
+  },
+  alarmStatusCard: {
+    flex: 2,
+    backgroundColor: `${COLORS.PRIMARY}20`,
+    borderRadius: 8,
+    padding: SPACING.MD,
+    marginRight: SPACING.SM,
+    borderWidth: 1,
+    borderColor: COLORS.PRIMARY,
+  },
+  alarmTriggeredCard: {
+    backgroundColor: `${COLORS.ALERT_RED}20`,
+    borderColor: COLORS.ALERT_RED,
+  },
+  alarmStatusTitle: {
+    fontSize: FONT_SIZES.SMALL,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+    marginBottom: SPACING.XS,
+  },
+  alarmTriggeredTitle: {
+    color: COLORS.ALERT_RED,
+    fontSize: FONT_SIZES.BODY,
+  },
+  alarmStatusDetail: {
+    fontSize: FONT_SIZES.SMALL,
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: SPACING.XS,
+    fontWeight: '600',
+  },
+  alarmTriggeredDetail: {
+    color: COLORS.ALERT_RED,
+    fontWeight: 'bold',
+  },
+  alarmStatusInfo: {
+    fontSize: FONT_SIZES.SMALL,
+    color: COLORS.TEXT_SECONDARY,
+    fontStyle: 'italic',
+  },
+  alarmTriggeredInfo: {
+    color: COLORS.ALERT_RED,
+    fontStyle: 'normal',
+    fontWeight: '600',
+  },
+  footerButtons: {
+    flexDirection: 'row',
+    marginRight: SPACING.SM,
+  },
+  settingsButton: {
+    flex: 1,
+    backgroundColor: COLORS.MEDIUM_GRAY,
+    marginRight: SPACING.XS,
+  },
+  clearAlarmButton: {
+    flex: 1,
+    backgroundColor: COLORS.DARK_GRAY,
+  },
+  settingsButtonText: {
+    fontSize: FONT_SIZES.LARGE,
+    color: COLORS.WHITE,
+    fontWeight: 'bold',
   },
 });
