@@ -4,7 +4,6 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
 } from 'react-native';
 import { COLORS, SPACING, FONT_SIZES } from '../utils/constants';
 
@@ -45,19 +44,19 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: SPACING.MD,
   },
-  label: {
-    fontSize: FONT_SIZES.BODY,
-    fontWeight: '600',
-    color: COLORS.TEXT_PRIMARY,
-    marginBottom: SPACING.SM,
-  },
   input: {
     backgroundColor: COLORS.WHITE,
-    borderWidth: 2,
     borderColor: COLORS.MEDIUM_GRAY,
     borderRadius: 8,
-    padding: SPACING.MD,
-    fontSize: FONT_SIZES.BODY,
+    borderWidth: 2,
     color: COLORS.TEXT_PRIMARY,
+    fontSize: FONT_SIZES.BODY,
+    padding: SPACING.MD,
+  },
+  label: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: '600',
+    marginBottom: SPACING.SM,
   },
 });

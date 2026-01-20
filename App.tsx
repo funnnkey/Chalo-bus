@@ -13,19 +13,15 @@ export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    initialize();
-  }, []);
-
   const initialize = async () => {
     try {
       await initDatabase();
-      
+
       const existingHistory = await getSearchHistory();
       if (existingHistory.length === 0) {
         await seedMockData();
       }
-      
+
       setIsReady(true);
     } catch (err) {
       console.error('Initialization error:', err);
@@ -33,6 +29,11 @@ export default function App() {
       setIsReady(true);
     }
   };
+
+  useEffect(() => {
+    initialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!isReady) {
     return (
@@ -62,21 +63,21 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  errorText: {
+    color: COLORS.ALERT_RED,
+    fontSize: 16,
+    padding: 16,
+    textAlign: 'center',
+  },
   loadingContainer: {
-    flex: 1,
-    backgroundColor: COLORS.WHITE,
     alignItems: 'center',
+    backgroundColor: COLORS.WHITE,
+    flex: 1,
     justifyContent: 'center',
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
     color: COLORS.TEXT_SECONDARY,
-  },
-  errorText: {
     fontSize: 16,
-    color: COLORS.ALERT_RED,
-    padding: 16,
-    textAlign: 'center',
+    marginTop: 16,
   },
 });

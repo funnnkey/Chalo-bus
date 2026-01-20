@@ -74,35 +74,35 @@ export const CityDropdown: React.FC<CityDropdownProps> = ({
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    padding: SPACING.MD,
+  cityName: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: '600',
   },
   dropdown: {
     backgroundColor: COLORS.WHITE,
     borderRadius: 8,
-    maxHeight: 300,
     elevation: 5,
+    maxHeight: 300,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
   dropdownItem: {
-    padding: SPACING.MD,
-    borderBottomWidth: 1,
     borderBottomColor: COLORS.LIGHT_GRAY,
+    borderBottomWidth: 1,
+    padding: SPACING.MD,
   },
-  cityName: {
-    fontSize: FONT_SIZES.BODY,
-    fontWeight: '600',
-    color: COLORS.TEXT_PRIMARY,
+  overlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    flex: 1,
+    justifyContent: 'center',
+    padding: SPACING.MD,
   },
   stateName: {
-    fontSize: FONT_SIZES.SMALL,
     color: COLORS.TEXT_SECONDARY,
+    fontSize: FONT_SIZES.SMALL,
     marginTop: SPACING.XS,
   },
 });

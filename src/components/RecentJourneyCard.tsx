@@ -44,31 +44,31 @@ export const RecentJourneyCard: React.FC<RecentJourneyCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.WHITE,
-    borderRadius: 8,
-    padding: SPACING.MD,
-    marginBottom: SPACING.SM,
-    borderWidth: 1,
     borderColor: COLORS.MEDIUM_GRAY,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: SPACING.SM,
+    padding: SPACING.MD,
+  },
+  countText: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: FONT_SIZES.SMALL,
+    marginLeft: SPACING.SM,
+  },
+  metaContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   routeContainer: {
     marginBottom: SPACING.XS,
   },
   routeText: {
+    color: COLORS.PRIMARY,
     fontSize: FONT_SIZES.BODY,
     fontWeight: '600',
-    color: COLORS.PRIMARY,
-  },
-  metaContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   timeText: {
-    fontSize: FONT_SIZES.SMALL,
     color: COLORS.TEXT_SECONDARY,
-  },
-  countText: {
     fontSize: FONT_SIZES.SMALL,
-    color: COLORS.TEXT_SECONDARY,
-    marginLeft: SPACING.SM,
   },
 });

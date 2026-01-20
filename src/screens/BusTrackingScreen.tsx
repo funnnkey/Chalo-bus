@@ -21,7 +21,8 @@ export const BusTrackingScreen: React.FC = () => {
   const { busNumber, operatorName, fromCity, toCity, departure, arrival, fare, bayNumber } =
     route.params;
 
-  const [stops, setStops] = useState<RouteStop[]>([]);
+  const routeStops = useMemo(() => getRouteStops(fromCity, toCity), [fromCity, toCity]);
+  const [stops, setStops] = useState<RouteStop[]>(routeStops);
   const [currentStopIndex, setCurrentStopIndex] = useState<number>(2);
   const [isFetchingLocation, setIsFetchingLocation] = useState<boolean>(true);
 
@@ -29,7 +30,6 @@ export const BusTrackingScreen: React.FC = () => {
   const delayMinutes = 0;
 
   useEffect(() => {
-    const routeStops = getRouteStops(fromCity, toCity);
     setStops(routeStops);
 
     setIsFetchingLocation(true);
@@ -39,7 +39,8 @@ export const BusTrackingScreen: React.FC = () => {
     }, 900);
 
     return () => clearTimeout(timeout);
-  }, [fromCity, toCity]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeStops]);
 
   const currentStop = stops[currentStopIndex];
   const nextStop = useMemo(() => {
@@ -317,9 +318,110 @@ export const BusTrackingScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  actionButton: {
+    alignItems: 'center',
+    borderRadius: 8,
     flex: 1,
+    justifyContent: 'center',
+    paddingVertical: SPACING.MD,
+  },
+  actionButtonText: {
+    color: COLORS.WHITE,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: 'bold',
+  },
+  actualTimeText: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: FONT_SIZES.SMALL,
+  },
+  alarmButton: {
+    backgroundColor: COLORS.PRIMARY,
+    marginRight: SPACING.SM,
+  },
+  closeButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  closeButtonText: {
+    color: COLORS.WHITE,
+    fontSize: FONT_SIZES.HEADER,
+    fontWeight: 'bold',
+  },
+  container: {
     backgroundColor: COLORS.LIGHT_GRAY,
+    flex: 1,
+  },
+  currentStopIndicator: {
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.PRIMARY,
+    borderRadius: 4,
+    marginTop: SPACING.XS,
+    paddingHorizontal: SPACING.SM,
+    paddingVertical: SPACING.XS,
+  },
+  currentStopText: {
+    color: COLORS.WHITE,
+    fontSize: FONT_SIZES.SMALL,
+    fontWeight: 'bold',
+  },
+  etaCard: {
+    backgroundColor: COLORS.PRIMARY,
+    borderRadius: 10,
+    elevation: 4,
+    marginHorizontal: SPACING.MD,
+    marginTop: SPACING.MD,
+    padding: SPACING.MD,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+  },
+  etaCardDelayed: {
+    backgroundColor: COLORS.ALERT_RED,
+  },
+  etaCardOnSchedule: {
+    backgroundColor: '#4CAF50',
+  },
+  etaDivider: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    height: 1,
+    marginVertical: SPACING.SM,
+  },
+  etaLabel: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: '600',
+  },
+  etaRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.XS,
+  },
+  etaTextOnColored: {
+    color: COLORS.WHITE,
+  },
+  etaValue: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: 'bold',
+  },
+  footer: {
+    backgroundColor: COLORS.WHITE,
+    borderTopColor: COLORS.LIGHT_GRAY,
+    borderTopWidth: 1,
+    elevation: 5,
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.MD,
+    paddingVertical: SPACING.MD,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   header: {
     backgroundColor: COLORS.PRIMARY,
@@ -327,221 +429,200 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.MD,
   },
   headerContent: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
   headerLeft: {
     flex: 1,
   },
-  headerTitle: {
-    fontSize: FONT_SIZES.HEADER,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-  },
   headerSubtitle: {
-    fontSize: FONT_SIZES.BODY,
     color: COLORS.WHITE,
+    fontSize: FONT_SIZES.BODY,
     marginTop: SPACING.XS,
   },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButtonText: {
+  headerTitle: {
+    color: COLORS.WHITE,
     fontSize: FONT_SIZES.HEADER,
-    color: COLORS.WHITE,
     fontWeight: 'bold',
-  },
-  statusBadge: {
-    paddingVertical: SPACING.SM,
-    paddingHorizontal: SPACING.MD,
-    alignItems: 'center',
-  },
-  statusBadgeOnSchedule: {
-    backgroundColor: '#4CAF50',
-  },
-  statusBadgeDelayed: {
-    backgroundColor: COLORS.ALERT_RED,
-  },
-  statusText: {
-    fontSize: FONT_SIZES.BODY,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
   },
   loadingContainer: {
+    alignItems: 'center',
     backgroundColor: COLORS.WHITE,
+    borderRadius: 8,
+    justifyContent: 'center',
     marginHorizontal: SPACING.MD,
     marginTop: SPACING.MD,
     padding: SPACING.LG,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   loadingText: {
-    fontSize: FONT_SIZES.BODY,
     color: COLORS.TEXT_SECONDARY,
-    marginTop: SPACING.MD,
+    fontSize: FONT_SIZES.BODY,
     fontWeight: '600',
-  },
-  etaCard: {
-    backgroundColor: COLORS.PRIMARY,
-    marginHorizontal: SPACING.MD,
     marginTop: SPACING.MD,
-    padding: SPACING.MD,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  etaCardOnSchedule: {
-    backgroundColor: '#4CAF50',
-  },
-  etaCardDelayed: {
-    backgroundColor: COLORS.ALERT_RED,
-  },
-  etaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.XS,
-  },
-  etaLabel: {
-    fontSize: FONT_SIZES.BODY,
-    color: COLORS.TEXT_SECONDARY,
-    fontWeight: '600',
-  },
-  etaValue: {
-    fontSize: FONT_SIZES.BODY,
-    color: COLORS.TEXT_PRIMARY,
-    fontWeight: 'bold',
-  },
-  etaTextOnColored: {
-    color: COLORS.WHITE,
-  },
-  etaDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    marginVertical: SPACING.SM,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: SPACING.MD,
-    paddingTop: SPACING.MD,
-    paddingBottom: SPACING.XL,
-  },
-  sectionTitle: {
-    fontSize: FONT_SIZES.BODY,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_PRIMARY,
-    marginBottom: SPACING.SM,
   },
   locationCard: {
     backgroundColor: COLORS.WHITE,
     borderRadius: 10,
-    padding: SPACING.MD,
+    elevation: 2,
     marginBottom: SPACING.LG,
+    padding: SPACING.MD,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
-    elevation: 2,
-  },
-  locationSubtitle: {
-    fontSize: FONT_SIZES.BODY,
-    fontWeight: 'bold',
-    color: COLORS.PRIMARY,
-    marginBottom: SPACING.XS,
   },
   locationHint: {
-    fontSize: FONT_SIZES.SMALL,
     color: COLORS.TEXT_SECONDARY,
+    fontSize: FONT_SIZES.SMALL,
     marginBottom: SPACING.SM,
   },
-  stopChip: {
-    paddingVertical: SPACING.SM,
-    paddingHorizontal: SPACING.MD,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.MEDIUM_GRAY,
-    backgroundColor: COLORS.WHITE,
-    marginRight: SPACING.SM,
+  locationSubtitle: {
+    color: COLORS.PRIMARY,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: 'bold',
+    marginBottom: SPACING.XS,
   },
-  stopChipSelected: {
-    borderColor: COLORS.PRIMARY,
-    backgroundColor: COLORS.PRIMARY,
+  nextStopDistance: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: FONT_SIZES.SMALL,
+    marginTop: SPACING.XS,
   },
-  stopChipText: {
+  nextStopInfo: {
+    borderTopColor: COLORS.PRIMARY,
+    borderTopWidth: 1,
+    marginTop: SPACING.SM,
+    paddingTop: SPACING.SM,
+  },
+  nextStopLabel: {
+    color: COLORS.PRIMARY,
     fontSize: FONT_SIZES.SMALL,
     fontWeight: '600',
+  },
+  scrollContent: {
+    paddingBottom: SPACING.XL,
+    paddingHorizontal: SPACING.MD,
+    paddingTop: SPACING.MD,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  sectionTitle: {
     color: COLORS.TEXT_PRIMARY,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: 'bold',
+    marginBottom: SPACING.SM,
+  },
+  shareButton: {
+    backgroundColor: COLORS.PRIMARY,
+    marginLeft: SPACING.SM,
+  },
+  statusBadge: {
+    alignItems: 'center',
+    paddingHorizontal: SPACING.MD,
+    paddingVertical: SPACING.SM,
+  },
+  statusBadgeDelayed: {
+    backgroundColor: COLORS.ALERT_RED,
+  },
+  statusBadgeOnSchedule: {
+    backgroundColor: '#4CAF50',
+  },
+  statusText: {
+    color: COLORS.WHITE,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: 'bold',
+  },
+  stopChip: {
+    backgroundColor: COLORS.WHITE,
+    borderColor: COLORS.MEDIUM_GRAY,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginRight: SPACING.SM,
+    paddingHorizontal: SPACING.MD,
+    paddingVertical: SPACING.SM,
+  },
+  stopChipSelected: {
+    backgroundColor: COLORS.PRIMARY,
+    borderColor: COLORS.PRIMARY,
+  },
+  stopChipText: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: FONT_SIZES.SMALL,
+    fontWeight: '600',
   },
   stopChipTextSelected: {
     color: COLORS.WHITE,
   },
-  timelineContainer: {
-    paddingLeft: SPACING.SM,
-  },
-  timelineItem: {
+  stopMetaRow: {
+    alignItems: 'center',
     flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: SPACING.XS,
   },
-  timelineLeftSection: {
-    width: 40,
-    alignItems: 'center',
-  },
-  timelineLineTop: {
-    width: 3,
-    height: 20,
-    backgroundColor: COLORS.PRIMARY,
-  },
-  timelineLineBottom: {
-    width: 3,
+  stopName: {
+    color: COLORS.TEXT_PRIMARY,
     flex: 1,
-    minHeight: 20,
-    backgroundColor: COLORS.PRIMARY,
-  },
-  timelineCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    backgroundColor: COLORS.WHITE,
-  },
-  timelineCircleCompleted: {
-    borderColor: COLORS.MEDIUM_GRAY,
-    backgroundColor: COLORS.LIGHT_GRAY,
-  },
-  timelineCircleCurrent: {
-    borderColor: COLORS.PRIMARY,
-    backgroundColor: COLORS.PRIMARY,
-  },
-  timelineCircleUpcoming: {
-    borderColor: COLORS.MEDIUM_GRAY,
-    backgroundColor: COLORS.WHITE,
-  },
-  timelineIconCompleted: {
-    fontSize: 16,
-    color: COLORS.DARK_GRAY,
+    fontSize: FONT_SIZES.BODY,
     fontWeight: 'bold',
   },
-  timelineIconCurrent: {
-    fontSize: 18,
-    color: COLORS.WHITE,
+  stopNameCompleted: {
+    color: COLORS.DARK_GRAY,
   },
-  timelineIconUpcoming: {
-    fontSize: 18,
+  stopNameCurrent: {
+    color: COLORS.PRIMARY,
+    fontSize: FONT_SIZES.LARGE,
+  },
+  stopNameUpcoming: {
+    color: COLORS.TEXT_SECONDARY,
+  },
+  stopStatusText: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: FONT_SIZES.SMALL,
+    fontWeight: '600',
+  },
+  stopStatusTextCurrent: {
+    color: COLORS.PRIMARY,
+  },
+  stopTime: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: FONT_SIZES.SMALL,
+    marginLeft: SPACING.SM,
+  },
+  stopTimeCompleted: {
+    color: COLORS.DARK_GRAY,
+  },
+  stopTimeCurrent: {
+    color: COLORS.PRIMARY,
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: 'bold',
+  },
+  stopTimeUpcoming: {
     color: COLORS.MEDIUM_GRAY,
+  },
+  timelineCircle: {
+    alignItems: 'center',
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 16,
+    borderWidth: 3,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  timelineCircleCompleted: {
+    backgroundColor: COLORS.LIGHT_GRAY,
+    borderColor: COLORS.MEDIUM_GRAY,
+  },
+  timelineCircleCurrent: {
+    backgroundColor: COLORS.PRIMARY,
+    borderColor: COLORS.PRIMARY,
+  },
+  timelineCircleUpcoming: {
+    backgroundColor: COLORS.WHITE,
+    borderColor: COLORS.MEDIUM_GRAY,
+  },
+  timelineContainer: {
+    paddingLeft: SPACING.SM,
   },
   timelineContent: {
     flex: 1,
@@ -551,130 +632,45 @@ const styles = StyleSheet.create({
   timelineContentCurrent: {
     backgroundColor: '#E3F2FD',
     borderRadius: 8,
-    padding: SPACING.SM,
     marginRight: SPACING.SM,
+    padding: SPACING.SM,
+  },
+  timelineIconCompleted: {
+    color: COLORS.DARK_GRAY,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  timelineIconCurrent: {
+    color: COLORS.WHITE,
+    fontSize: 18,
+  },
+  timelineIconUpcoming: {
+    color: COLORS.MEDIUM_GRAY,
+    fontSize: 18,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    marginBottom: SPACING.XS,
+  },
+  timelineLeftSection: {
+    alignItems: 'center',
+    width: 40,
+  },
+  timelineLineBottom: {
+    backgroundColor: COLORS.PRIMARY,
+    flex: 1,
+    minHeight: 20,
+    width: 3,
+  },
+  timelineLineTop: {
+    backgroundColor: COLORS.PRIMARY,
+    height: 20,
+    width: 3,
   },
   timelineStopHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: SPACING.XS,
-  },
-  stopName: {
-    fontSize: FONT_SIZES.BODY,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_PRIMARY,
-    flex: 1,
-  },
-  stopNameCurrent: {
-    color: COLORS.PRIMARY,
-    fontSize: FONT_SIZES.LARGE,
-  },
-  stopNameCompleted: {
-    color: COLORS.DARK_GRAY,
-  },
-  stopNameUpcoming: {
-    color: COLORS.TEXT_SECONDARY,
-  },
-  stopTime: {
-    fontSize: FONT_SIZES.SMALL,
-    color: COLORS.TEXT_SECONDARY,
-    marginLeft: SPACING.SM,
-  },
-  stopTimeCurrent: {
-    color: COLORS.PRIMARY,
-    fontWeight: 'bold',
-    fontSize: FONT_SIZES.BODY,
-  },
-  stopTimeCompleted: {
-    color: COLORS.DARK_GRAY,
-  },
-  stopTimeUpcoming: {
-    color: COLORS.MEDIUM_GRAY,
-  },
-  stopMetaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: SPACING.XS,
-  },
-  stopStatusText: {
-    fontSize: FONT_SIZES.SMALL,
-    color: COLORS.TEXT_SECONDARY,
-    fontWeight: '600',
-  },
-  stopStatusTextCurrent: {
-    color: COLORS.PRIMARY,
-  },
-  actualTimeText: {
-    fontSize: FONT_SIZES.SMALL,
-    color: COLORS.TEXT_SECONDARY,
-  },
-  currentStopIndicator: {
-    marginTop: SPACING.XS,
-    paddingVertical: SPACING.XS,
-    paddingHorizontal: SPACING.SM,
-    backgroundColor: COLORS.PRIMARY,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
-  },
-  currentStopText: {
-    fontSize: FONT_SIZES.SMALL,
-    color: COLORS.WHITE,
-    fontWeight: 'bold',
-  },
-  stopStatus: {
-    fontSize: FONT_SIZES.SMALL,
-    color: COLORS.TEXT_SECONDARY,
-    marginTop: SPACING.XS,
-  },
-  nextStopInfo: {
-    marginTop: SPACING.SM,
-    paddingTop: SPACING.SM,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.PRIMARY,
-  },
-  nextStopLabel: {
-    fontSize: FONT_SIZES.SMALL,
-    color: COLORS.PRIMARY,
-    fontWeight: '600',
-  },
-  nextStopDistance: {
-    fontSize: FONT_SIZES.SMALL,
-    color: COLORS.TEXT_SECONDARY,
-    marginTop: SPACING.XS,
-  },
-  footer: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.WHITE,
-    paddingHorizontal: SPACING.MD,
-    paddingVertical: SPACING.MD,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.LIGHT_GRAY,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: SPACING.MD,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  alarmButton: {
-    backgroundColor: COLORS.PRIMARY,
-    marginRight: SPACING.SM,
-  },
-  shareButton: {
-    backgroundColor: COLORS.PRIMARY,
-    marginLeft: SPACING.SM,
-  },
-  actionButtonText: {
-    fontSize: FONT_SIZES.BODY,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
   },
 });
