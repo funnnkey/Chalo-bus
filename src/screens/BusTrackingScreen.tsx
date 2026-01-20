@@ -1,29 +1,55 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackParamList, RouteStop } from '../types';
 import { COLORS, FONT_SIZES, SPACING } from '../utils/constants';
 import { getCurrentStopIndex, getRouteStops } from '../utils/mockRouteData';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import {
+  setAlarm,
+  clearAlarm,
+  updateAlarmDistance,
+  triggerAlarm,
+  selectIsAlarmSet,
+  selectActiveAlarms,
+  selectDistanceToStop,
+  selectAlarmForStop,
+} from '../store/alarmSlice';
+import { AlarmConfigModal } from '../components/AlarmConfigModal';
+import { gpsAlarmService, AlarmConfig } from '../services/GPSAlarmService';
 
 type BusTrackingRouteProp = RouteProp<RootStackParamList, 'BusTracking'>;
 
 export const BusTrackingScreen: React.FC = () => {
   const route = useRoute<BusTrackingRouteProp>();
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const { busNumber, operatorName, fromCity, toCity, departure, arrival, fare, bayNumber } =
     route.params;
 
   const [stops, setStops] = useState<RouteStop[]>([]);
   const [currentStopIndex, setCurrentStopIndex] = useState<number>(2);
   const [isFetchingLocation, setIsFetchingLocation] = useState<boolean>(true);
+  const [showAlarmModal, setShowAlarmModal] = useState<boolean>(false);
+  const [mockCurrentLocation] = useState<{ latitude: number; longitude: number }>({
+    latitude: 28.5355,
+    longitude: 77.3910,
+  });
+
+  // Redux selectors
+  const isAlarmSet = useAppSelector(selectIsAlarmSet);
+  const activeAlarms = useAppSelector(selectActiveAlarms);
+  const distanceToStops = useAppSelector(state => state.alarm.distanceToStops);
 
   const isOnSchedule = true;
   const delayMinutes = 0;
@@ -40,6 +66,25 @@ export const BusTrackingScreen: React.FC = () => {
 
     return () => clearTimeout(timeout);
   }, [fromCity, toCity]);
+
+  // Initialize GPS Alarm Service
+  useEffect(() => {
+    const initializeAlarmService = async () => {
+      try {
+        await gpsAlarmService.initialize();
+        console.log('GPS Alarm Service initialized on BusTrackingScreen');
+      } catch (error) {
+        console.error('Failed to initialize GPS Alarm Service:', error);
+      }
+    };
+
+    initializeAlarmService();
+
+    // Cleanup on unmount
+    return () => {
+      gpsAlarmService.cleanup();
+    };
+  }, []);
 
   const currentStop = stops[currentStopIndex];
   const nextStop = useMemo(() => {
@@ -62,8 +107,33 @@ export const BusTrackingScreen: React.FC = () => {
   };
 
   const handleSetAlarm = () => {
-    alert('GPS-based alarm will be set when you are 5-10km from destination');
+    setShowAlarmModal(true);
   };
+
+  const handleSetAlarmConfig = useCallback(async (config: AlarmConfig) => {
+    try {
+      const alarmKey = await gpsAlarmService.setDestinationAlarm(config);
+      dispatch(setAlarm({ alarmKey, config }));
+      
+      Alert.alert(
+        'Alarm Set!',
+        `You will be alerted when you're within ${config.alarmRadius}km of ${config.stopName}`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.error('Failed to set alarm:', error);
+      Alert.alert('Error', 'Failed to set alarm. Please check your location permissions.');
+    }
+  }, [dispatch]);
+
+  const handleClearAlarm = useCallback(async (stopName: string) => {
+    try {
+      await gpsAlarmService.clearAlarm(stopName);
+      dispatch(clearAlarm(stopName));
+    } catch (error) {
+      console.error('Failed to clear alarm:', error);
+    }
+  }, [dispatch]);
 
   const handleShare = () => {
     alert('Share current bus location feature coming soon!');
@@ -75,6 +145,19 @@ export const BusTrackingScreen: React.FC = () => {
       setCurrentStopIndex(index);
       setIsFetchingLocation(false);
     }, 400);
+  };
+
+  // Get alarm status for a stop
+  const getAlarmStatusForStop = (stopName: string) => {
+    const alarm = activeAlarms.find(a => a.stopName === stopName);
+    if (!alarm) return null;
+    
+    return {
+      isActive: alarm.isActive,
+      hasTriggered: alarm.hasTriggered,
+      distance: alarm.currentDistance,
+      radius: alarm.config.alarmRadius,
+    };
   };
 
   const renderTimelineStop = (stop: RouteStop, index: number) => {
@@ -298,11 +381,13 @@ export const BusTrackingScreen: React.FC = () => {
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.actionButton, styles.alarmButton]}
-          onPress={handleSetAlarm}
+          style={[styles.actionButton, isAlarmSet ? styles.alarmButtonActive : styles.alarmButton]}
+          onPress={isAlarmSet ? () => setShowAlarmModal(true) : handleSetAlarm}
           activeOpacity={0.8}
         >
-          <Text style={styles.actionButtonText}>🔔 SET ALARM</Text>
+          <Text style={styles.actionButtonText}>
+            {isAlarmSet ? '🔔 ALARM SET ✓' : '🔔 SET ALARM'}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.actionButton, styles.shareButton]}
@@ -312,6 +397,44 @@ export const BusTrackingScreen: React.FC = () => {
           <Text style={styles.actionButtonText}>📍 SHARE</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Alarm Status Card */}
+      {isAlarmSet && (
+        <View style={styles.alarmStatusCard}>
+          <Text style={styles.alarmStatusTitle}>GPS Alarm Active</Text>
+          {activeAlarms.filter(alarm => alarm.isActive).map(alarm => (
+            <View key={alarm.stopName} style={styles.alarmItem}>
+              <Text style={styles.alarmStopName}>{alarm.stopName}</Text>
+              <View style={styles.alarmInfoRow}>
+                <Text style={styles.alarmDistance}>
+                  Distance: {alarm.currentDistance === Infinity ? '...' : `${Math.round(alarm.currentDistance)} km`}
+                </Text>
+                <Text style={styles.alarmRadius}>
+                  Alert at: {alarm.config.alarmRadius} km
+                </Text>
+              </View>
+              <Text style={styles.alarmStatus}>
+                {alarm.hasTriggered ? '✓ ALREADY TRIGGERED' : alarm.currentDistance <= alarm.config.alarmRadius ? '⚠️ WITHIN RANGE' : '⏳ WAITING'}
+              </Text>
+              <TouchableOpacity
+                style={styles.clearAlarmButton}
+                onPress={() => handleClearAlarm(alarm.stopName)}
+              >
+                <Text style={styles.clearAlarmButtonText}>🔕 DISABLE ALARM</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Alarm Configuration Modal */}
+      <AlarmConfigModal
+        visible={showAlarmModal}
+        onClose={() => setShowAlarmModal(false)}
+        onSetAlarm={handleSetAlarmConfig}
+        availableStops={stops}
+        currentLocation={mockCurrentLocation}
+      />
     </SafeAreaView>
   );
 };
@@ -668,12 +791,82 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.PRIMARY,
     marginRight: SPACING.SM,
   },
+  alarmButtonActive: {
+    backgroundColor: '#4CAF50',
+    marginRight: SPACING.SM,
+  },
   shareButton: {
     backgroundColor: COLORS.PRIMARY,
     marginLeft: SPACING.SM,
   },
   actionButtonText: {
     fontSize: FONT_SIZES.BODY,
+    fontWeight: 'bold',
+    color: COLORS.WHITE,
+  },
+  alarmStatusCard: {
+    backgroundColor: COLORS.WHITE,
+    marginHorizontal: SPACING.MD,
+    marginTop: SPACING.SM,
+    padding: SPACING.MD,
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.PRIMARY,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  alarmStatusTitle: {
+    fontSize: FONT_SIZES.LARGE,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+    marginBottom: SPACING.MD,
+    textAlign: 'center',
+  },
+  alarmItem: {
+    borderWidth: 1,
+    borderColor: COLORS.MEDIUM_GRAY,
+    borderRadius: 8,
+    padding: SPACING.MD,
+    marginBottom: SPACING.SM,
+    backgroundColor: COLORS.LIGHT_GRAY,
+  },
+  alarmStopName: {
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: SPACING.XS,
+  },
+  alarmInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.XS,
+  },
+  alarmDistance: {
+    fontSize: FONT_SIZES.SMALL,
+    color: COLORS.TEXT_SECONDARY,
+  },
+  alarmRadius: {
+    fontSize: FONT_SIZES.SMALL,
+    color: COLORS.TEXT_SECONDARY,
+  },
+  alarmStatus: {
+    fontSize: FONT_SIZES.SMALL,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+    marginBottom: SPACING.SM,
+  },
+  clearAlarmButton: {
+    backgroundColor: COLORS.ALERT_RED,
+    paddingVertical: SPACING.SM,
+    paddingHorizontal: SPACING.MD,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  clearAlarmButtonText: {
+    fontSize: FONT_SIZES.SMALL,
     fontWeight: 'bold',
     color: COLORS.WHITE,
   },
