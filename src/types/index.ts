@@ -12,6 +12,26 @@ export interface SearchHistory {
   lastSearched: string;
 }
 
+export interface BusOperator {
+  id: number;
+  operatorName: string;
+  operatorCode: string;
+  isStateTransport: boolean;
+}
+
+export interface BusSchedule {
+  id: number;
+  busNumber: string;
+  operatorId: number;
+  fromCity: string;
+  toCity: string;
+  departureTime: string;
+  arrivalTime: string;
+  fare: number;
+  isAc: boolean;
+  isSleeper: boolean;
+}
+
 export interface SearchState {
   fromCity: string;
   toCity: string;
