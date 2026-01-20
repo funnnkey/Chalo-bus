@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Provider } from 'react-redux';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from './src/store';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { initDatabase, getSearchHistory } from './src/db/database';
@@ -51,10 +52,12 @@ export default function App() {
   }
 
   return (
-    <Provider store={store}>
-      <RootNavigator />
-      <StatusBar style="light" />
-    </Provider>
+    <SafeAreaProvider>
+      <Provider store={store}>
+        <RootNavigator />
+        <StatusBar style="light" />
+      </Provider>
+    </SafeAreaProvider>
   );
 }
 
