@@ -56,7 +56,16 @@ export const SpotScreen: React.FC = () => {
 
   const handleSearchBusNumber = () => {
     if (busNumber) {
-      navigation.navigate('BusTracking', { busNumber });
+      navigation.navigate('BusTracking', {
+        busNumber,
+        operatorName: 'UPSRTC',
+        fromCity: 'Delhi',
+        toCity: 'Agra',
+        departure: '09:00 AM',
+        arrival: '03:30 PM',
+        fare: 250,
+        bayNumber: '4',
+      });
     }
   };
 
