@@ -4,7 +4,6 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
 } from 'react-native';
 import { COLORS, SPACING, FONT_SIZES } from '../utils/constants';
 

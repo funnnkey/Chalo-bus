@@ -24,9 +24,7 @@ import {
   selectAlarmStop,
   updateAlarmSettings,
   updateAlarmDistance,
-  selectAlarmState,
   selectIsAlarmSet,
-  selectActiveAlarms,
   selectSelectedAlarm,
   selectDistanceToStop,
   selectHasTriggered,
@@ -50,7 +48,6 @@ export const BusTrackingScreen: React.FC = () => {
 
   // Redux state
   const isAlarmSet = useAppSelector(selectIsAlarmSet);
-  const activeAlarms = useAppSelector(selectActiveAlarms);
   const selectedAlarm = useAppSelector(selectSelectedAlarm);
   const distanceToStop = useAppSelector(selectDistanceToStop);
   const hasTriggered = useAppSelector(selectHasTriggered);
@@ -86,8 +83,8 @@ export const BusTrackingScreen: React.FC = () => {
         const permissions = await GPSAlarmService.requestPermissions();
         setLocationPermissionGranted(permissions.location);
         setNotificationPermissionGranted(permissions.notifications);
-      } catch (error) {
-        console.error('Error requesting permissions:', error);
+      } catch {
+        // Error handling is done elsewhere
       }
 
       return () => clearTimeout(timeout);
@@ -114,7 +111,7 @@ export const BusTrackingScreen: React.FC = () => {
           
           // Check if alarm should trigger
           if (distance <= selectedAlarm.radius && !hasTriggered) {
-            dispatch(markAlarmTriggered(selectedAlarm.stopName));
+            dispatch(markAlarmTriggered());
           }
         }
       });
@@ -232,13 +229,13 @@ export const BusTrackingScreen: React.FC = () => {
       const permissions = await GPSAlarmService.requestPermissions();
       setLocationPermissionGranted(permissions.location);
       setNotificationPermissionGranted(permissions.notifications);
-    } catch (error) {
-      console.error('Error requesting permissions:', error);
+    } catch {
+      // Error handling is done elsewhere
     }
   }, []);
 
   const handleShare = () => {
-    alert('Share current bus location feature coming soon!');
+    Alert.alert('Info', 'Share current bus location feature coming soon!');
   };
 
   const handleSelectCurrentStop = (index: number) => {

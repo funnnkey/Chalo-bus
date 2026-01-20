@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AlarmConfig, AlarmState, RouteStop } from '../types';
+import { AlarmConfig, AlarmState } from '../types';
 
 const initialState: AlarmState = {
   isAlarmSet: false,
@@ -89,9 +89,8 @@ const alarmSlice = createSlice({
       state.distanceToStop = action.payload;
     },
 
-    markAlarmTriggered: (state, action: PayloadAction<string>) => {
+    markAlarmTriggered: (state) => {
       // Mark specific alarm as triggered
-      const stopName = action.payload;
       // In a real implementation, we'd track triggered status per alarm
       // For now, mark as general triggered state
       state.hasTriggered = true;

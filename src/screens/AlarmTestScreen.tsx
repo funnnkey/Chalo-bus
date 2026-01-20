@@ -8,7 +8,7 @@ export const AlarmTestScreen: React.FC = () => {
     try {
       await GPSAlarmService.testAlarm('Delhi Bus Stop');
       Alert.alert('Success', 'Test alarm triggered! Check your notifications.');
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to trigger test alarm');
     }
   };
@@ -33,7 +33,7 @@ export const AlarmTestScreen: React.FC = () => {
       });
 
       Alert.alert('Success', 'Multiple alarms set! Check active alarms.');
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to set multiple alarms');
     }
   };

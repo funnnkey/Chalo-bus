@@ -16,7 +16,10 @@ class GPSAlarmService {
   private static instance: GPSAlarmService;
   private activeAlarms: Map<string, AlarmConfig> = new Map();
   private triggeredAlarms: Set<string> = new Set();
-  private locationSubscription: { unsubscribe: () => void } | null = null;
+  private locationSubscription: { 
+    unsubscribe: () => void; 
+    interval?: ReturnType<typeof setInterval>;
+  } | null = null;
   private currentLocation: LocationData | null = null;
 
   private constructor() {}
@@ -100,8 +103,8 @@ class GPSAlarmService {
       const interval = setInterval(simulateLocation, 10000);
       
       // Store the interval for cleanup
-      (this.locationSubscription as any).interval = interval;
-      (this.locationSubscription as any).unsubscribe = () => clearInterval(interval);
+      this.locationSubscription.interval = interval;
+      this.locationSubscription.unsubscribe = () => clearInterval(interval);
     } catch (error) {
       console.error('Error starting location monitoring:', error);
     }
@@ -123,7 +126,6 @@ class GPSAlarmService {
    */
   public async setDestinationAlarm(config: AlarmConfig): Promise<void> {
     try {
-      console.log(`Setting alarm for ${config.stopName} with radius ${config.radius}km`);
       this.activeAlarms.set(config.stopName, config);
       this.triggeredAlarms.delete(config.stopName); // Reset triggered status
       
@@ -150,8 +152,6 @@ class GPSAlarmService {
       } else {
         Notifications.setBadgeCountAsync(0);
       }
-      
-      console.log(`Cleared alarm for ${stopName}`);
     } catch (error) {
       console.error('Error clearing alarm:', error);
     }
@@ -165,7 +165,6 @@ class GPSAlarmService {
       this.activeAlarms.clear();
       this.triggeredAlarms.clear();
       Notifications.setBadgeCountAsync(0);
-      console.log('Cleared all alarms');
     } catch (error) {
       console.error('Error clearing all alarms:', error);
     }
@@ -190,8 +189,6 @@ class GPSAlarmService {
         config.longitude
       );
 
-      console.log(`Distance to ${stopName}: ${distance.toFixed(2)}km`);
-
       // Check if within alarm radius and hasn't been triggered yet
       if (distance <= config.radius && !this.triggeredAlarms.has(stopName)) {
         await this.triggerAlarm(stopName, config, distance);
@@ -209,8 +206,6 @@ class GPSAlarmService {
     distance: number
   ): Promise<void> {
     try {
-      console.log(`🚨 ALARM TRIGGERED for ${stopName}! Distance: ${distance.toFixed(2)}km`);
-
       // Send notification
       if (config.alarmType === 'NOTIFICATION' || config.alarmType === 'ALL') {
         await this.sendNotification(stopName, distance);
@@ -227,7 +222,6 @@ class GPSAlarmService {
       }
 
       // Handle repeat alerts if enabled (this would be managed by Redux state)
-      console.log('Alarm triggered successfully');
     } catch (error) {
       console.error('Error triggering alarm:', error);
     }
@@ -283,7 +277,7 @@ class GPSAlarmService {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       
       // Add additional vibration for emphasis
-      await Haptics.impactAsync('medium' as any);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
       console.error('Error triggering haptic feedback:', error);
     }

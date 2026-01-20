@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { RouteStop, AlarmConfig } from '../types';
+import { RouteStop } from '../types';
 import { COLORS, FONT_SIZES, SPACING } from '../utils/constants';
 
 interface StopSelectionModalProps {
