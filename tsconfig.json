@@ -21,7 +21,12 @@
     "types": ["react", "react-native"]
   },
   "include": [
+<<<<<<< Updated upstream
     "src/**/*"
+=======
+    "**/*.ts",
+    "**/*.tsx"
+>>>>>>> Stashed changes
   ],
   "exclude": [
     "node_modules",
