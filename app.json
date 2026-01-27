@@ -14,7 +14,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.chalobus.app"
+      "bundleIdentifier": "com.chalobus.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs location access to show nearby bus stops and provide arrival notifications.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs location access to track your journey and send bus arrival alerts."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,15 +27,31 @@
         "backgroundColor": "#003D7A"
       },
       "package": "com.chalobus.app",
+      "versionCode": 1,
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "WAKE_LOCK",
+        "FOREGROUND_SERVICE"
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Chalo Bus - Live Bus Tracking",
+      "shortName": "Chalo Bus"
+    },
+    "plugins": [
+      "expo-location",
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      }
     }
   }
 }

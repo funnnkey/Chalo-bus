@@ -33,6 +33,8 @@ import {
 
 // Services and components
 import GPSAlarmService from '../services/GPSAlarmService';
+import { NotificationService } from '../services/NotificationService';
+import { GPSTrackingService } from '../services/GPSTrackingService';
 import { StopSelectionModal } from '../components/StopSelectionModal';
 import { AlarmSettingsModal } from '../components/AlarmSettingsModal';
 import { LocationData } from '../types';
@@ -81,8 +83,9 @@ export const BusTrackingScreen: React.FC = () => {
       // Request permissions
       try {
         const permissions = await GPSAlarmService.requestPermissions();
+        const notificationPermission = await NotificationService.requestPermissions();
         setLocationPermissionGranted(permissions.location);
-        setNotificationPermissionGranted(permissions.notifications);
+        setNotificationPermissionGranted(notificationPermission);
       } catch {
         // Error handling is done elsewhere
       }
@@ -97,10 +100,10 @@ export const BusTrackingScreen: React.FC = () => {
   useEffect(() => {
     if (isAlarmSet && locationPermissionGranted) {
       // Start location monitoring
-      GPSAlarmService.startLocationMonitoring((location: LocationData) => {
+      GPSTrackingService.startTracking((location: LocationData) => {
         // Update distance for selected alarm
         if (selectedAlarm) {
-          const distance = GPSAlarmService.calculateDistance(
+          const distance = GPSTrackingService.calculateDistance(
             location.latitude,
             location.longitude,
             selectedAlarm.latitude,
@@ -112,19 +115,25 @@ export const BusTrackingScreen: React.FC = () => {
           // Check if alarm should trigger
           if (distance <= selectedAlarm.radius && !hasTriggered) {
             dispatch(markAlarmTriggered());
+            // Schedule notification
+            NotificationService.scheduleBusArrivalNotification(
+              busNumber,
+              selectedAlarm.stopName,
+              2
+            );
           }
         }
       });
 
       // Cleanup function
       return () => {
-        GPSAlarmService.stopLocationMonitoring();
+        GPSTrackingService.stopTracking();
       };
     } else {
       // Stop monitoring if no alarm set
-      GPSAlarmService.stopLocationMonitoring();
+      GPSTrackingService.stopTracking();
     }
-  }, [isAlarmSet, locationPermissionGranted, selectedAlarm, hasTriggered, dispatch]);
+  }, [isAlarmSet, locationPermissionGranted, selectedAlarm, hasTriggered, dispatch, busNumber]);
 
   const currentStop = stops[currentStopIndex];
   const nextStop = useMemo(() => {
@@ -143,7 +152,8 @@ export const BusTrackingScreen: React.FC = () => {
   }, [currentStopIndex, nextStop, stops.length]);
 
   const handleClose = () => {
-    GPSAlarmService.stopLocationMonitoring();
+    GPSTrackingService.stopTracking();
+    NotificationService.cancelAllNotifications();
     navigation.goBack();
   };
 

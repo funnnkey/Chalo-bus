@@ -37,6 +37,9 @@ export interface SearchState {
   toCity: string;
   busNumber: string;
   searchHistory: SearchHistory[];
+  fromStop: string;
+  toStop: string;
+  searchType: 'CITY' | 'STOP';
 }
 
 export interface UIState {
@@ -91,6 +94,10 @@ export type RootStackParamList = {
   SearchResults: {
     fromCity: string;
     toCity: string;
+  };
+  BusRouteResults: {
+    fromStop: string;
+    toStop: string;
   };
   BusTracking: {
     busNumber: string;

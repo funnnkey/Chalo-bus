@@ -15,13 +15,18 @@ import {
   setToCity,
   setBusNumber,
   setSearchHistory,
+  setFromStop,
+  setToStop,
+  setSearchType,
 } from '../store/searchSlice';
 import {
   SearchInput,
   CityDropdown,
+  BusStopDropdown,
   RecentJourneyCard,
 } from '../components';
 import { COLORS, SPACING, FONT_SIZES, INDIAN_CITIES } from '../utils/constants';
+import { DELHI_BUS_STOPS, searchBusStops } from '../utils/delhiBusData';
 import { getSearchHistory, addSearchHistory } from '../db/database';
 import { RootStackParamList } from '../types';
 
@@ -30,12 +35,14 @@ type SpotScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 export const SpotScreen: React.FC = () => {
   const navigation = useNavigation<SpotScreenNavigationProp>();
   const dispatch = useAppDispatch();
-  const { fromCity, toCity, busNumber, searchHistory } = useAppSelector(
+  const { fromCity, toCity, busNumber, searchHistory, fromStop, toStop, searchType } = useAppSelector(
     (state) => state.search
   );
 
   const [fromCityDropdownVisible, setFromCityDropdownVisible] = useState(false);
   const [toCityDropdownVisible, setToCityDropdownVisible] = useState(false);
+  const [fromStopDropdownVisible, setFromStopDropdownVisible] = useState(false);
+  const [toStopDropdownVisible, setToStopDropdownVisible] = useState(false);
 
   useEffect(() => {
     loadSearchHistory();
@@ -47,10 +54,12 @@ export const SpotScreen: React.FC = () => {
   };
 
   const handleSearchBuses = async () => {
-    if (fromCity && toCity) {
+    if (searchType === 'CITY' && fromCity && toCity) {
       await addSearchHistory(fromCity, toCity);
       await loadSearchHistory();
       navigation.navigate('SearchResults', { fromCity, toCity });
+    } else if (searchType === 'STOP' && fromStop && toStop) {
+      navigation.navigate('BusRouteResults', { fromStop, toStop });
     }
   };
 
@@ -70,11 +79,17 @@ export const SpotScreen: React.FC = () => {
   };
 
   const handleRecentJourneyPress = async (from: string, to: string) => {
-    dispatch(setFromCity(from));
-    dispatch(setToCity(to));
-    await addSearchHistory(from, to);
-    await loadSearchHistory();
-    navigation.navigate('SearchResults', { fromCity: from, toCity: to });
+    if (searchType === 'CITY') {
+      dispatch(setFromCity(from));
+      dispatch(setToCity(to));
+      await addSearchHistory(from, to);
+      await loadSearchHistory();
+      navigation.navigate('SearchResults', { fromCity: from, toCity: to });
+    } else {
+      dispatch(setFromStop(from));
+      dispatch(setToStop(to));
+      navigation.navigate('BusRouteResults', { fromStop: from, toStop: to });
+    }
   };
 
   return (
@@ -88,69 +103,172 @@ export const SpotScreen: React.FC = () => {
         </View>
 
         <View style={styles.searchSection}>
-          <SearchInput
-            label="FROM:"
-            value={fromCity}
-            onChangeText={(text) => {
-              dispatch(setFromCity(text));
-              if (text) {
-                setFromCityDropdownVisible(true);
-              }
-            }}
-            placeholder="Enter city name"
-            onFocus={() => {
-              if (fromCity) {
-                setFromCityDropdownVisible(true);
-              }
-            }}
-          />
+          <View style={styles.searchTypeToggle}>
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                searchType === 'CITY' && styles.toggleButtonActive,
+              ]}
+              onPress={() => dispatch(setSearchType('CITY'))}
+            >
+              <Text
+                style={[
+                  styles.toggleButtonText,
+                  searchType === 'CITY' && styles.toggleButtonTextActive,
+                ]}
+              >
+                INTER-CITY
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                searchType === 'STOP' && styles.toggleButtonActive,
+              ]}
+              onPress={() => dispatch(setSearchType('STOP'))}
+            >
+              <Text
+                style={[
+                  styles.toggleButtonText,
+                  searchType === 'STOP' && styles.toggleButtonTextActive,
+                ]}
+              >
+                LOCAL BUSES
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-          <CityDropdown
-            cities={INDIAN_CITIES}
-            searchQuery={fromCity}
-            onSelectCity={(city) => {
-              dispatch(setFromCity(city));
-            }}
-            visible={fromCityDropdownVisible}
-            onClose={() => setFromCityDropdownVisible(false)}
-          />
+          {searchType === 'CITY' ? (
+            <>
+              <SearchInput
+                label="FROM:"
+                value={fromCity}
+                onChangeText={(text) => {
+                  dispatch(setFromCity(text));
+                  if (text) {
+                    setFromCityDropdownVisible(true);
+                  }
+                }}
+                placeholder="Enter city name"
+                onFocus={() => {
+                  if (fromCity) {
+                    setFromCityDropdownVisible(true);
+                  }
+                }}
+              />
 
-          <SearchInput
-            label="TO:"
-            value={toCity}
-            onChangeText={(text) => {
-              dispatch(setToCity(text));
-              if (text) {
-                setToCityDropdownVisible(true);
-              }
-            }}
-            placeholder="Enter city name"
-            onFocus={() => {
-              if (toCity) {
-                setToCityDropdownVisible(true);
-              }
-            }}
-          />
+              <CityDropdown
+                cities={INDIAN_CITIES}
+                searchQuery={fromCity}
+                onSelectCity={(city) => {
+                  dispatch(setFromCity(city));
+                }}
+                visible={fromCityDropdownVisible}
+                onClose={() => setFromCityDropdownVisible(false)}
+              />
 
-          <CityDropdown
-            cities={INDIAN_CITIES}
-            searchQuery={toCity}
-            onSelectCity={(city) => {
-              dispatch(setToCity(city));
-            }}
-            visible={toCityDropdownVisible}
-            onClose={() => setToCityDropdownVisible(false)}
-          />
+              <SearchInput
+                label="TO:"
+                value={toCity}
+                onChangeText={(text) => {
+                  dispatch(setToCity(text));
+                  if (text) {
+                    setToCityDropdownVisible(true);
+                  }
+                }}
+                placeholder="Enter city name"
+                onFocus={() => {
+                  if (toCity) {
+                    setToCityDropdownVisible(true);
+                  }
+                }}
+              />
+
+              <CityDropdown
+                cities={INDIAN_CITIES}
+                searchQuery={toCity}
+                onSelectCity={(city) => {
+                  dispatch(setToCity(city));
+                }}
+                visible={toCityDropdownVisible}
+                onClose={() => setToCityDropdownVisible(false)}
+              />
+            </>
+          ) : (
+            <>
+              <SearchInput
+                label="FROM STOP:"
+                value={fromStop}
+                onChangeText={(text) => {
+                  dispatch(setFromStop(text));
+                  if (text) {
+                    setFromStopDropdownVisible(true);
+                  }
+                }}
+                placeholder="Enter bus stop name"
+                onFocus={() => {
+                  if (fromStop) {
+                    setFromStopDropdownVisible(true);
+                  }
+                }}
+              />
+
+              <BusStopDropdown
+                stops={searchBusStops(fromStop)}
+                searchQuery={fromStop}
+                onSelectStop={(stop) => {
+                  dispatch(setFromStop(stop));
+                }}
+                visible={fromStopDropdownVisible}
+                onClose={() => setFromStopDropdownVisible(false)}
+              />
+
+              <SearchInput
+                label="TO STOP:"
+                value={toStop}
+                onChangeText={(text) => {
+                  dispatch(setToStop(text));
+                  if (text) {
+                    setToStopDropdownVisible(true);
+                  }
+                }}
+                placeholder="Enter bus stop name"
+                onFocus={() => {
+                  if (toStop) {
+                    setToStopDropdownVisible(true);
+                  }
+                }}
+              />
+
+              <BusStopDropdown
+                stops={searchBusStops(toStop)}
+                searchQuery={toStop}
+                onSelectStop={(stop) => {
+                  dispatch(setToStop(stop));
+                }}
+                visible={toStopDropdownVisible}
+                onClose={() => setToStopDropdownVisible(false)}
+              />
+            </>
+          )}
 
           <TouchableOpacity
             style={[
               styles.searchButton,
-              (!fromCity || !toCity) && styles.searchButtonDisabled,
+              (searchType === 'CITY' && (!fromCity || !toCity)) ||
+              (searchType === 'STOP' && (!fromStop || !toStop))
+                ? styles.searchButtonDisabled
+                : null,
             ]}
             onPress={handleSearchBuses}
-            disabled={!fromCity || !toCity}
+            disabled={
+              (searchType === 'CITY' && (!fromCity || !toCity)) ||
+              (searchType === 'STOP' && (!fromStop || !toStop))
+            }
           >
-            <Text style={styles.searchButtonText}>SEARCH BUSES</Text>
+            <Text style={styles.searchButtonText}>
+              {searchType === 'CITY' ? 'SEARCH BUSES' : 'FIND ROUTES'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -289,5 +407,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.TEXT_PRIMARY,
     marginBottom: SPACING.MD,
+  },
+  searchTypeToggle: {
+    flexDirection: 'row',
+    marginBottom: SPACING.MD,
+    backgroundColor: COLORS.LIGHT_GRAY,
+    borderRadius: 8,
+    padding: 4,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: SPACING.SM,
+    paddingHorizontal: SPACING.MD,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  toggleButtonActive: {
+    backgroundColor: COLORS.PRIMARY,
+  },
+  toggleButtonText: {
+    fontSize: FONT_SIZES.BODY,
+    fontWeight: '600',
+    color: COLORS.TEXT_SECONDARY,
+  },
+  toggleButtonTextActive: {
+    color: COLORS.WHITE,
   },
 });

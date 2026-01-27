@@ -6,6 +6,9 @@ const initialState: SearchState = {
   toCity: '',
   busNumber: '',
   searchHistory: [],
+  fromStop: '',
+  toStop: '',
+  searchType: 'CITY',
 };
 
 const searchSlice = createSlice({
@@ -24,10 +27,21 @@ const searchSlice = createSlice({
     setSearchHistory: (state, action: PayloadAction<SearchHistory[]>) => {
       state.searchHistory = action.payload;
     },
+    setFromStop: (state, action: PayloadAction<string>) => {
+      state.fromStop = action.payload;
+    },
+    setToStop: (state, action: PayloadAction<string>) => {
+      state.toStop = action.payload;
+    },
+    setSearchType: (state, action: PayloadAction<'CITY' | 'STOP'>) => {
+      state.searchType = action.payload;
+    },
     clearSearch: (state) => {
       state.fromCity = '';
       state.toCity = '';
       state.busNumber = '';
+      state.fromStop = '';
+      state.toStop = '';
     },
   },
 });
@@ -37,6 +51,9 @@ export const {
   setToCity,
   setBusNumber,
   setSearchHistory,
+  setFromStop,
+  setToStop,
+  setSearchType,
   clearSearch,
 } = searchSlice.actions;
 
